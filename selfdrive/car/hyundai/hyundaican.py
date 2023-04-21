@@ -165,7 +165,9 @@ def create_scc12(packer, apply_accel, enabled, cnt, scc_live, scc12, gaspressed,
     values["CR_VSM_Alive"] = cnt
     if not scc_live:
       values["ACCMode"] = 1 if enabled else 0  # 2 if gas padel pressed
-
+  
+  values["CF_VSM_ConfMode"] = 1 #Jason
+  values["AEB_Status"] = 1 # Jason
   values["CR_VSM_ChkSum"] = 0
   dat = packer.make_can_msg("SCC12", 0, values)[2]
   values["CR_VSM_ChkSum"] = 16 - sum([sum(divmod(i, 16)) for i in dat]) % 16
@@ -174,6 +176,9 @@ def create_scc12(packer, apply_accel, enabled, cnt, scc_live, scc12, gaspressed,
 
 def create_scc13(packer, scc13):
   values = copy.copy(scc13)
+  values["SCCDrvModeRValue"] = 2 #Jason
+  values["SCC_Equip"] = 1 #Jason
+  values["Lead_Veh_Dep_Alert_USM"] = 2 #Jason
   return packer.make_can_msg("SCC13", 0, values)
 
 def create_scc14(packer, enabled, e_vgo, standstill, accel, gaspressed, objgap, scc14):
