@@ -49,7 +49,7 @@ class CarState(CarStateBase):
     self.cruiseState_speed = 0
 
     self.use_cluster_speed = Params().get_bool('UseClusterSpeed')
-    self.long_control_enabled = Params().get_bool('LongControlEnabled')
+    self.long_control_enabled = True #Params().get_bool('LongControlEnabled')
 
   def update(self, cp, cp2, cp_cam):
     cp_mdps = cp2 if self.mdps_bus else cp

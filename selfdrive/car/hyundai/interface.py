@@ -9,6 +9,7 @@ from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness,
 from selfdrive.car.interfaces import CarInterfaceBase
 from common.params import Params
 from selfdrive.controls.lib.desire_helper import LANE_CHANGE_SPEED_MIN
+from selfdrive.car.disable_ecu import disable_ecu
 
 GearShifter = car.CarState.GearShifter
 EventName = car.CarEvent.EventName
@@ -34,7 +35,7 @@ class CarInterface(CarInterfaceBase):
   def get_params(candidate, fingerprint=gen_empty_fingerprint(), car_fw=[], disable_radar=False):  # pylint: disable=dangerous-default-value
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
 
-    ret.openpilotLongitudinalControl = Params().get_bool('LongControlEnabled')
+    ret.openpilotLongitudinalControl = True #Params().get_bool('LongControlEnabled')
 
     ret.carName = "hyundai"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.hyundaiLegacy, 0)]
@@ -363,6 +364,11 @@ class CarInterface(CarInterfaceBase):
     if ret.radarOffCan or ret.mdpsBus == 1 or ret.openpilotLongitudinalControl or ret.sccBus == 1 or Params().get_bool('MadModeEnabled'):
       ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.hyundaiCommunity, 0)]
     return ret
+
+  @staticmethod
+  def init(CP, logcan, sendcan):
+    if CP.openpilotLongitudinalControl and CP.sccBus in (0, -1):
+      disable_ecu(logcan, sendcan, addr=0x7d0, com_cont_req=b'\x28\x83\x01')
 
   def _update(self, c: car.CarControl) -> car.CarState:
     pass

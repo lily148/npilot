@@ -174,6 +174,12 @@ class CarController:
     if CS.mdps_bus or self.car_fingerprint in FEATURES["send_mdps12"]:  # send mdps12 to LKAS to prevent LKAS error
       can_sends.append(create_mdps12(self.packer, self.frame, CS.mdps12))
 
+
+    # tester present - w/ no response (keeps radar disabled)
+    if self.longcontrol:
+      if (self.frame % 100) == 0:
+        can_sends.append([0x7D0, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0])
+
     self.update_auto_resume(CC, CS, clu11_speed, can_sends)
     self.update_scc(CC, CS, actuators, controls, hud_control, can_sends)
 
