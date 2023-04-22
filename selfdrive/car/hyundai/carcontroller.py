@@ -82,6 +82,12 @@ class CarController:
     self.cut_steer_frames = 0
     self.cut_steer = False
 
+    # radar disable for legacy cars
+    self.counter_init = False
+    self.radarDisableActivated = False
+    self.radarDisableResetTimer = 0
+    self.radarDisableOverlapTimer = 0
+
     self.steer_fault_max_angle = CP.steerFaultMaxAngle
     self.steer_fault_max_frames = CP.steerFaultMaxFrames
 
@@ -179,6 +185,41 @@ class CarController:
     if self.longcontrol:
       if (self.frame % 100) == 0:
         can_sends.append([0x7D0, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0])
+
+      # # radar disable for legacy cars
+    if self.longcontrol:
+       self.radarDisableOverlapTimer += 1
+       self.radarDisableResetTimer = 0
+       if self.radarDisableOverlapTimer >= 30:
+         self.radarDisableActivated = True
+         if 200 > self.radarDisableOverlapTimer > 36:
+           if self.frame % 41 == 0 or self.radarDisableOverlapTimer == 37:
+             can_sends.append([0x7D0, 0, b"\x02\x10\x03\x00\x00\x00\x00\x00", 0])
+           elif self.frame % 43 == 0 or self.radarDisableOverlapTimer == 37:
+             can_sends.append([0x7D0, 0, b"\x03\x28\x03\x01\x00\x00\x00\x00", 0])
+           elif self.frame % 19 == 0 or self.radarDisableOverlapTimer == 37:
+             can_sends.append([0x7D0, 0, b"\x02\x10\x85\x00\x00\x00\x00\x00", 0])  # this disables RADAR for
+       else:
+         self.counter_init = False
+         can_sends.append([0x7D0, 0, b"\x02\x10\x90\x00\x00\x00\x00\x00", 0])  # this enables RADAR
+         can_sends.append([0x7D0, 0, b"\x03\x29\x03\x01\x00\x00\x00\x00", 0])
+    elif self.radarDisableActivated:
+       can_sends.append([0x7D0, 0, b"\x02\x10\x90\x00\x00\x00\x00\x00", 0])  # this enables RADAR
+       can_sends.append([0x7D0, 0, b"\x03\x29\x03\x01\x00\x00\x00\x00", 0])
+       self.radarDisableOverlapTimer = 0
+       if self.frame % 50 == 0:
+         self.radarDisableResetTimer += 1
+         if self.radarDisableResetTimer > 2:
+           self.radarDisableActivated = False
+           self.counter_init = True
+    else:
+       self.radarDisableOverlapTimer = 0
+       self.radarDisableResetTimer = 0
+
+    if (self.frame % 50 == 0 or self.radarDisableOverlapTimer == 37) and \
+             self.longcontrol and self.radarDisableOverlapTimer >= 30:
+       can_sends.append([0x7D0, 0, b"\x02\x3E\x00\x00\x00\x00\x00\x00", 0])
+
 
     self.update_auto_resume(CC, CS, clu11_speed, can_sends)
     self.update_scc(CC, CS, actuators, controls, hud_control, can_sends)
